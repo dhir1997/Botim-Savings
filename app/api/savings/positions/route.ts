@@ -16,13 +16,17 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { productId, amount } = body as { productId: ProductId; amount: number };
+    const { productId, amount, paymentMethod = "wallet" } = body as {
+      productId: ProductId;
+      amount: number;
+      paymentMethod?: "wallet" | "debit" | "applepay";
+    };
 
     if (!productId || !amount || isNaN(amount) || amount <= 0) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const position = createPosition(productId, amount);
+    const position = createPosition(productId, amount, paymentMethod);
     return NextResponse.json({ position, walletBalance: getWalletBalance() }, { status: 201 });
   } catch (err) {
     return NextResponse.json(

@@ -4,16 +4,22 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowDown,
   BadgeCheck,
   ChevronRight,
   Clock,
+  CreditCard,
+  Globe,
   Home,
   Info,
   Lock,
   MessageCircle,
   MoreHorizontal,
   Phone,
+  PieChart,
   Plus,
+  QrCode,
+  Send,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -37,7 +43,6 @@ const phone = "mx-auto w-full max-w-[420px] min-h-screen bg-black text-white rel
 const card = "rounded-[28px] bg-[#0f1117]";
 const GREEN = "#00c896";
 const GREEN_DIM = "rgba(0,200,150,0.12)";
-const GREEN_TEXT = "text-[#00c896]";
 const RATE_COLORS: Record<string, string> = {
   flexible: "#5b9cf6",
   "30d": "#f5a623",
@@ -123,122 +128,405 @@ function PageShell({
   );
 }
 
-// ─── Screen: Savings Hub ─────────────────────────────────────────────────────
+// ─── Tab pill ────────────────────────────────────────────────────────────────
+function TabPill({
+  active,
+  children,
+  onClick,
+}: {
+  active?: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-full px-5 py-2 text-sm font-semibold transition"
+      style={
+        active
+          ? { background: "rgba(255,255,255,0.14)", color: "#fff" }
+          : { background: "transparent", color: "rgba(255,255,255,0.45)" }
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Pay tab ─────────────────────────────────────────────────────────────────
+function PayTab({
+  walletBalance,
+  onNavigate,
+}: {
+  walletBalance: number;
+  onNavigate: (s: string, data?: unknown) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Wallet balance card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[30px] border border-white/10 p-6"
+        style={{ background: "linear-gradient(135deg,rgba(20,40,60,0.95),rgba(5,15,25,0.92))" }}
+      >
+        <div className="text-sm text-white/55 mb-1">Wallet balance</div>
+        <div className="text-4xl font-semibold tracking-tight mb-4">{formatAed(walletBalance)}</div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white/8 px-3 py-2.5">
+            <div className="text-xs text-white/45">Pending</div>
+            <div className="text-sm font-semibold mt-0.5">AED 0.00</div>
+          </div>
+          <div className="rounded-xl bg-white/8 px-3 py-2.5">
+            <div className="text-xs text-white/45">Daily limit left</div>
+            <div className="text-sm font-semibold mt-0.5">AED 8,500</div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { icon: Send, label: "Send" },
+          { icon: QrCode, label: "QR code" },
+          { icon: Plus, label: "Add funds" },
+          { icon: ArrowDown, label: "Withdraw" },
+        ].map(({ icon: Icon, label }) => (
+          <button key={label} className="flex flex-col items-center gap-2">
+            <div className="flex h-14 w-full items-center justify-center rounded-[18px] bg-white/10 text-white/80">
+              <Icon className="h-5 w-5" />
+            </div>
+            <span className="text-xs text-white/70">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Savings entry widget */}
+      <button
+        onClick={() => onNavigate("selectProduct")}
+        className="w-full rounded-[28px] p-5 text-left transition hover:scale-[1.01]"
+        style={{ background: "linear-gradient(135deg,rgba(0,50,35,0.9),rgba(0,22,15,0.95))", border: "1px solid rgba(0,200,150,0.2)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl p-3" style={{ background: `${GREEN_DIM}`, color: GREEN }}>
+              <TrendingUp className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: GREEN }}>
+                Botim Savings
+              </div>
+              <div className="text-xl font-semibold">Earn up to 8% p.a.</div>
+              <div className="text-sm text-white/55 mt-0.5">Yield daily · AED · No crypto exposure</div>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-white/30 shrink-0" />
+        </div>
+        <div className="mt-4 flex gap-2">
+          {["3% Flexible", "4.5% 30D", "6% 6M", "8% 1Y"].map((t) => (
+            <span key={t} className="rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: "rgba(0,200,150,0.12)", color: GREEN }}>
+              {t}
+            </span>
+          ))}
+        </div>
+      </button>
+
+      {/* International transfer */}
+      <button className="w-full rounded-[28px] bg-white/95 p-5 text-left text-black transition hover:scale-[1.01]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-[#eef1ff] p-3 text-[#2040e8]">
+              <Globe className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#2040e8]">AED → INR</div>
+              <div className="text-xl font-semibold mt-0.5">1 AED = 25.34 INR</div>
+              <div className="text-sm text-black/55">Send money internationally</div>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-black/40" />
+        </div>
+      </button>
+
+      {/* Services */}
+      <div className="rounded-[28px] bg-[#0f1117] p-5">
+        <div className="mb-3 text-base font-semibold">Services</div>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { icon: CreditCard, label: "Cards" },
+            { icon: Send, label: "Send" },
+            { icon: Phone, label: "Top-up" },
+            { icon: MoreHorizontal, label: "More" },
+          ].map(({ icon: Icon, label }) => (
+            <button key={label} className="flex flex-col items-center gap-1.5 rounded-[16px] bg-white/5 py-3 hover:bg-white/8">
+              <Icon className="h-5 w-5 text-white/70" />
+              <span className="text-[11px] text-white/60">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Wealth tab ───────────────────────────────────────────────────────────────
+// Mock static holdings for gold, silver, BTC, ETH
+const STATIC_HOLDINGS = [
+  { id: "gold",   label: "Gold",   ticker: "XAU", valueAed: 1240.50, change: +1.8,  color: "#f5a623" },
+  { id: "silver", label: "Silver", ticker: "XAG", valueAed:  318.75, change: -0.4,  color: "#a0aec0" },
+  { id: "btc",    label: "Bitcoin",ticker: "BTC", valueAed:  875.20, change: +3.2,  color: "#f7931a" },
+  { id: "eth",    label: "Ethereum",ticker:"ETH", valueAed:  412.60, change: +1.1,  color: "#627eea" },
+];
+
+function WealthTab({
+  positions,
+  walletBalance,
+  loading,
+  onNavigate,
+}: {
+  positions: SavingsPosition[];
+  walletBalance: number;
+  loading: boolean;
+  onNavigate: (s: string, data?: unknown) => void;
+}) {
+  const activePositions = positions.filter((p) => p.status === "active");
+  const totalSaved = activePositions.reduce((s, p) => s + p.balance, 0);
+  const totalPending = activePositions.reduce((s, p) => s + p.pendingYield, 0);
+  const totalStatic = STATIC_HOLDINGS.reduce((s, h) => s + h.valueAed, 0);
+  const totalWealth = parseFloat((totalSaved + totalStatic).toFixed(2));
+
+  const productName = (id: string) =>
+    id === "flexible" ? "Flexible Savings"
+    : id === "30d" ? "30-Day Fixed"
+    : id === "6m" ? "6-Month Fixed"
+    : "1-Year Fixed";
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Total wealth card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[30px] border border-white/10 p-6"
+        style={{ background: "linear-gradient(135deg,rgba(10,30,50,0.98),rgba(5,15,25,0.95))" }}
+      >
+        <div className="text-sm text-white/55 mb-1">Total wealth</div>
+        <div className="text-4xl font-semibold tracking-tight">
+          {loading ? <span className="animate-pulse text-white/30">···</span> : formatAed(totalWealth)}
+        </div>
+        {/* Mini breakdown bar */}
+        <div className="mt-4">
+          <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden mb-2">
+            {[
+              { value: totalSaved, color: GREEN },
+              ...STATIC_HOLDINGS.map((h) => ({ value: h.valueAed, color: h.color })),
+            ].map(({ value, color }, i) => (
+              <div
+                key={i}
+                className="h-full"
+                style={{ width: `${(value / totalWealth) * 100}%`, background: color }}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {[
+              { label: "Savings", color: GREEN, value: totalSaved },
+              ...STATIC_HOLDINGS.map((h) => ({ label: h.label, color: h.color, value: h.valueAed })),
+            ].map(({ label, color, value }) => (
+              <div key={label} className="flex items-center gap-1 text-xs text-white/50">
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color }} />
+                {label} {Math.round((value / totalWealth) * 100)}%
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* My Holdings */}
+      <div className="rounded-[28px] bg-[#0f1117] p-5">
+        <div className="mb-3 text-base font-semibold">My holdings</div>
+        <div className="flex flex-col gap-2">
+
+          {/* Savings positions */}
+          {activePositions.map((pos) => {
+            const earned = parseFloat((pos.balance - pos.principal).toFixed(2));
+            return (
+              <button
+                key={pos.id}
+                onClick={() => onNavigate("savingsHub")}
+                className="flex items-center justify-between rounded-[16px] bg-white/5 px-4 py-3.5 text-left hover:bg-white/8 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full p-2 shrink-0" style={{ background: `${GREEN_DIM}`, color: GREEN }}>
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">{productName(pos.productId)}</div>
+                    <div className="text-xs text-white/40">Savings · +{formatAed(earned)} earned</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold">{formatAed(pos.balance)}</div>
+                  <div className="text-xs" style={{ color: GREEN }}>+{pct(RATE_COLORS[pos.productId] ? [0.03,0.045,0.06,0.08][["flexible","30d","6m","1y"].indexOf(pos.productId)] : 0.03)} p.a.</div>
+                </div>
+              </button>
+            );
+          })}
+
+          {/* Static holdings */}
+          {STATIC_HOLDINGS.map((h) => (
+            <div key={h.id} className="flex items-center justify-between rounded-[16px] bg-white/5 px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full p-2 shrink-0" style={{ background: `${h.color}18`, color: h.color }}>
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">{h.label}</div>
+                  <div className="text-xs text-white/40">{h.ticker}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-semibold">{formatAed(h.valueAed)}</div>
+                <div className={`text-xs ${h.change >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  {h.change >= 0 ? "+" : ""}{h.change}%
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Empty savings state */}
+          {!loading && activePositions.length === 0 && (
+            <div className="rounded-[16px] border border-dashed border-white/10 px-4 py-4 text-center">
+              <div className="text-xs text-white/35">No savings plan yet</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Investments entry */}
+      <div className="rounded-[28px] bg-[#0f1117] p-5">
+        <div className="mb-3 text-base font-semibold">Invest more</div>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { icon: TrendingUp, label: "Buy Gold" },
+            { icon: TrendingUp, label: "Buy Silver" },
+            { icon: PieChart, label: "Crypto" },
+            { icon: MoreHorizontal, label: "More" },
+          ].map(({ icon: Icon, label }) => (
+            <button key={label} className="flex flex-col items-center gap-1.5 rounded-[16px] bg-white/5 py-3 hover:bg-white/8">
+              <Icon className="h-5 w-5 text-white/70" />
+              <span className="text-[11px] text-white/60">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Savings entry */}
+        <button
+          onClick={() => onNavigate("savingsHub")}
+          className="mt-3 w-full flex items-center justify-between rounded-[16px] px-4 py-3.5 transition hover:brightness-110"
+          style={{ background: GREEN_DIM, border: "1px solid rgba(0,200,150,0.2)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-full p-2" style={{ background: "rgba(0,200,150,0.18)", color: GREEN }}>
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-semibold" style={{ color: GREEN }}>Savings</div>
+              <div className="text-xs text-white/45">Up to 8% p.a. · Daily yield · AED</div>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-white/30" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Credit tab ───────────────────────────────────────────────────────────────
+function CreditTab() {
+  return (
+    <div className="rounded-[28px] bg-[#0f1117] p-6">
+      <div className="text-2xl font-semibold mb-2">Credit</div>
+      <p className="text-white/55 text-sm leading-relaxed">
+        Buy now, pay later and credit products live here. Out of scope for this prototype.
+      </p>
+    </div>
+  );
+}
+
+// ─── Screen: Money Home (Pay / Credit / Wealth tabs) ─────────────────────────
 function SavingsHub({
   onNavigate,
   positions,
   walletBalance,
   loading,
+  initialTab = "pay",
 }: {
   onNavigate: (s: string, data?: unknown) => void;
   positions: SavingsPosition[];
   walletBalance: number;
   loading: boolean;
+  initialTab?: "pay" | "credit" | "wealth";
 }) {
-  const activePositions = positions.filter((p) => p.status === "active");
-  const totalSaved = activePositions.reduce((s, p) => s + p.balance, 0);
-  const totalPending = activePositions.reduce((s, p) => s + p.pendingYield, 0);
+  const [tab, setTab] = useState<"pay" | "credit" | "wealth">(initialTab);
 
   return (
-    <PageShell
-      title="botim"
-      subtitle="SAVINGS"
-      navCurrent="money"
-      onNavigate={(s) => onNavigate(s)}
-      gradient="linear-gradient(180deg,#001a12 0%,#002b1e 22%,#000 65%)"
+    <div
+      className={phone}
+      style={{ background: "linear-gradient(180deg,#021018 0%,#03282f 22%,#000 58%)" }}
     >
-      <div className="pt-4">
-        {/* Hero balance card */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-5 rounded-[32px] border border-white/10 p-6"
-          style={{
-            background:
-              "linear-gradient(135deg,rgba(0,60,42,0.95) 0%,rgba(0,28,20,0.92) 100%)",
-          }}
-        >
-          <div className="mb-1 text-sm text-white/60">Total savings balance</div>
-          <div className="text-4xl font-semibold tracking-tight">
-            {loading ? (
-              <span className="animate-pulse">Loading…</span>
-            ) : (
-              formatAed(totalSaved)
-            )}
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-6 pb-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[32px] font-bold tracking-tight">botim</span>
+          <span className="rounded-full bg-white px-3 py-0.5 text-xs font-bold text-black uppercase tracking-wider">
+            MONEY
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10">
+            <CreditCard className="h-5 w-5 text-white/80" />
           </div>
-          {totalSaved > 0 && (
-            <div className="mt-3 flex items-center gap-2">
-              <div
-                className="rounded-full px-3 py-1 text-xs font-medium"
-                style={{ background: GREEN_DIM, color: GREEN }}
-              >
-                +{formatAed(totalPending)} pending today
-              </div>
-              <span className="text-xs text-white/40">credited T+1</span>
-            </div>
-          )}
-          <div className="mt-4 flex items-center justify-between rounded-xl bg-white/8 px-4 py-3">
-            <span className="text-sm text-white/60">Wallet balance</span>
-            <span className="text-base font-semibold">{formatAed(walletBalance)}</span>
-          </div>
-        </motion.div>
-
-        {/* CTA */}
-        <button
-          onClick={() => onNavigate("selectProduct")}
-          className="mb-6 flex w-full items-center justify-between rounded-[24px] px-6 py-5 text-left text-black font-semibold text-lg transition hover:scale-[1.01]"
-          style={{ background: `linear-gradient(135deg,${GREEN},#00a87e)` }}
-        >
-          <span>Open new savings plan</span>
-          <Plus className="h-6 w-6" />
-        </button>
-
-        {/* Active plans */}
-        {activePositions.length > 0 && (
-          <div className="mb-6">
-            <div className="mb-3 text-xl font-semibold">My plans</div>
-            <div className="flex flex-col gap-3">
-              {activePositions.map((pos) => (
-                <PositionCard
-                  key={pos.id}
-                  position={pos}
-                  onClick={() => onNavigate("planDetail", pos)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && activePositions.length === 0 && (
-          <div className={`${card} p-6 text-center`}>
-            <div className="mb-2 text-4xl">🌱</div>
-            <div className="text-lg font-semibold">Start growing your money</div>
-            <div className="mt-1 text-sm text-white/55">
-              Earn up to 8% p.a. with Botim Savings — powered by stablecoin yield, paid daily.
-            </div>
-          </div>
-        )}
-
-        {/* How it works */}
-        <div className={`${card} p-5 mt-2`}>
-          <div className="mb-4 text-lg font-semibold">How it works</div>
-          <div className="flex flex-col gap-3">
-            {[
-              { icon: <TrendingUp className="h-4 w-4" />, text: "Deposit AED — earn yield in AED" },
-              { icon: <Sparkles className="h-4 w-4" />, text: "Yield accrues daily, credited T+1" },
-              { icon: <ShieldCheck className="h-4 w-4" />, text: "Powered by stablecoin staking — you hold AED" },
-              { icon: <BadgeCheck className="h-4 w-4" />, text: "Yield auto-reinvested for compounding" },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-3 text-sm text-white/75">
-                <div className="rounded-full p-1.5" style={{ background: GREEN_DIM, color: GREEN }}>{icon}</div>
-                {text}
-              </div>
-            ))}
-          </div>
+          <div className="h-10 w-10 rounded-full bg-[radial-gradient(circle_at_35%_35%,#d4ff8e,#457a33)] ring-2 ring-white/10" />
         </div>
       </div>
-    </PageShell>
+
+      {/* Tabs */}
+      <div className="flex gap-1 px-4 pt-4 pb-2">
+        <TabPill active={tab === "pay"} onClick={() => setTab("pay")}>Pay</TabPill>
+        <TabPill active={tab === "credit"} onClick={() => setTab("credit")}>Credit</TabPill>
+        <TabPill active={tab === "wealth"} onClick={() => setTab("wealth")}>Wealth</TabPill>
+      </div>
+
+      {/* Tab content */}
+      <div className="px-5 pb-28 overflow-auto">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="pt-4"
+          >
+            {tab === "pay" && (
+              <PayTab walletBalance={walletBalance} onNavigate={onNavigate} />
+            )}
+            {tab === "credit" && <CreditTab />}
+            {tab === "wealth" && (
+              <WealthTab
+                positions={positions}
+                walletBalance={walletBalance}
+                loading={loading}
+                onNavigate={onNavigate}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <BottomNav current="money" onNavigate={(s) => onNavigate(s)} />
+    </div>
   );
 }
 
@@ -316,18 +604,21 @@ function ProductSelector({
   onBack,
   onNavigate,
   products,
+  positions,
 }: {
   onBack: () => void;
   onNavigate: (s: string, data?: unknown) => void;
   products: SavingsProduct[];
+  positions: SavingsPosition[];
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const selectedProduct = products.find((p) => p.id === selected);
+  const hasFlexible = positions.some((p) => p.productId === "flexible" && p.status === "active");
 
   return (
     <PageShell onBack={onBack} title="botim" navCurrent="money">
       <div className="pt-4">
-        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 1 of 3</div>
+        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 1 of 4</div>
         <div className="mb-6 text-3xl font-semibold leading-tight">
           Choose your<br />savings plan
         </div>
@@ -352,8 +643,17 @@ function ProductSelector({
                       {productIcon(p.id)}
                     </div>
                     <div>
-                      <div className="font-semibold text-base">{p.name}</div>
-                      <div className="text-xs text-white/50 mt-0.5">{p.termLabel}</div>
+                      <div className="font-semibold text-base flex items-center gap-2">
+                        {p.name}
+                        {p.id === "flexible" && hasFlexible && (
+                          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${color}22`, color }}>
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-white/50 mt-0.5">
+                        {p.id === "flexible" && hasFlexible ? "Funds will be added to your existing plan" : p.termLabel}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -430,20 +730,18 @@ function DepositScreen({
   const error =
     amount > 0 && amount < product.minDeposit
       ? `Minimum is ${formatAed(product.minDeposit)}`
-      : amount > walletBalance
-      ? "Insufficient wallet balance"
       : null;
 
-  const canContinue = amount >= product.minDeposit && amount <= walletBalance;
+  const canContinue = amount >= product.minDeposit;
 
   function handleQuick(v: number) {
-    setRaw(String(Math.min(v, walletBalance)));
+    setRaw(String(v));
   }
 
   return (
     <PageShell onBack={onBack} title="botim" navCurrent="money">
       <div className="pt-4">
-        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 2 of 3</div>
+        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 2 of 4</div>
         <div className="mb-2 text-3xl font-semibold">How much to save?</div>
         <div className="mb-6 flex items-center gap-2 text-sm">
           <div className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ background: `${color}22`, color }}>
@@ -469,7 +767,7 @@ function DepositScreen({
           {error && <div className="mt-2 text-xs text-red-400">{error}</div>}
           <div className="mt-3 flex items-center justify-between text-xs text-white/45">
             <span>Wallet: {formatAed(walletBalance)}</span>
-            <button onClick={() => setRaw(String(walletBalance))} className="text-[#00c896]">Max</button>
+            <button onClick={() => setRaw(String(walletBalance))} className="text-[#00c896]">Use all</button>
           </div>
         </div>
 
@@ -525,7 +823,7 @@ function DepositScreen({
             color: canContinue ? "#000" : "#fff",
           }}
         >
-          Review & Confirm
+          Review order
         </button>
       </div>
     </PageShell>
@@ -544,32 +842,11 @@ function ConfirmDeposit({
   product: SavingsProduct;
   amount: number;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const color = RATE_COLORS[product.id] ?? GREEN;
   const projected = projectedYield(amount, product.rateAnnual, product.termDays);
   const maturityDate = product.termDays
     ? new Date(Date.now() + product.termDays * 24 * 60 * 60 * 1000)
     : null;
-
-  async function handleConfirm() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/savings/positions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, amount }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      onNavigate("success", { position: data.position, product, amount });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const rows = [
     { label: "Product", value: product.name },
@@ -589,7 +866,7 @@ function ConfirmDeposit({
   return (
     <PageShell onBack={onBack} title="botim" navCurrent="money">
       <div className="pt-4">
-        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 3 of 3</div>
+        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 3 of 4</div>
         <div className="mb-6 text-3xl font-semibold">Review your plan</div>
 
         <div className="mb-5 rounded-[28px] bg-[#0f1117] divide-y divide-white/8">
@@ -617,19 +894,12 @@ function ConfirmDeposit({
           </div>
         )}
 
-        {error && (
-          <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-300">
-            {error}
-          </div>
-        )}
-
         <button
-          onClick={handleConfirm}
-          disabled={loading}
-          className="w-full rounded-full py-5 text-lg font-semibold transition disabled:opacity-50"
+          onClick={() => onNavigate("paymentMethod", { product, amount })}
+          className="w-full rounded-full py-5 text-lg font-semibold transition"
           style={{ background: `linear-gradient(135deg,${GREEN},#00a87e)`, color: "#000" }}
         >
-          {loading ? "Processing…" : "Confirm & Start saving"}
+          Choose payment method
         </button>
       </div>
     </PageShell>
@@ -691,7 +961,7 @@ function DepositSuccess({
         </div>
 
         <button
-          onClick={() => onNavigate("hub")}
+          onClick={() => onNavigate("hub", { tab: "wealth" })}
           className="w-full rounded-full py-5 text-lg font-semibold"
           style={{ background: `linear-gradient(135deg,${GREEN},#00a87e)`, color: "#000" }}
         >
@@ -1043,11 +1313,396 @@ function RedeemSuccess({
 }
 
 // ─── Router / Root ────────────────────────────────────────────────────────────
+// ─── Screen: Payment Method ───────────────────────────────────────────────────
+type PaymentMethod = "wallet" | "debit" | "applepay";
+
+async function submitPosition(
+  product: SavingsProduct,
+  amount: number,
+  paymentMethod: PaymentMethod = "wallet"
+) {
+  const res = await fetch("/api/savings/positions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId: product.id, amount, paymentMethod }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error);
+  return data;
+}
+
+function PaymentMethodScreen({
+  onBack,
+  onNavigate,
+  product,
+  amount,
+  walletBalance,
+}: {
+  onBack: () => void;
+  onNavigate: (s: string, data?: unknown) => void;
+  product: SavingsProduct;
+  amount: number;
+  walletBalance: number;
+}) {
+  const [selected, setSelected] = useState<PaymentMethod | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const walletSufficient = walletBalance >= amount;
+
+  async function handleConfirm() {
+    if (!selected) return;
+    if (selected === "debit") {
+      onNavigate("debitCvv", { product, amount });
+      return;
+    }
+    // wallet or apple pay — process immediately
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await submitPosition(product, amount, selected);
+      onNavigate("success", { position: data.position, product, amount });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const methods: {
+    id: PaymentMethod;
+    label: string;
+    sublabel: string;
+    icon: React.ReactNode;
+    badge?: string;
+    disabled?: boolean;
+    disabledReason?: string;
+  }[] = [
+    {
+      id: "wallet",
+      label: "Botim Wallet",
+      sublabel: `Balance: ${formatAed(walletBalance)}`,
+      icon: <Wallet className="h-5 w-5" />,
+      badge: walletSufficient ? undefined : "Insufficient",
+      disabled: !walletSufficient,
+      disabledReason: `You need ${formatAed(amount - walletBalance)} more`,
+    },
+    {
+      id: "debit",
+      label: "Debit card",
+      sublabel: "Visa •••• 4782",
+      icon: <CreditCard className="h-5 w-5" />,
+    },
+    {
+      id: "applepay",
+      label: "Apple Pay",
+      sublabel: "Touch ID or Face ID",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <PageShell onBack={onBack} title="botim" navCurrent="money">
+      <div className="pt-4">
+        <div className="mb-1 text-xs uppercase tracking-widest text-white/40">Step 4 of 4</div>
+        <div className="mb-2 text-3xl font-semibold">How would you like to pay?</div>
+        <div className="mb-6 text-sm text-white/45">{formatAed(amount)} · {product.name}</div>
+
+        <div className="flex flex-col gap-3 mb-6">
+          {methods.map((m) => {
+            const isSelected = selected === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => !m.disabled && setSelected(m.id)}
+                disabled={m.disabled}
+                className="w-full rounded-[22px] border p-5 text-left transition"
+                style={{
+                  borderColor: isSelected ? GREEN : "rgba(255,255,255,0.08)",
+                  background: isSelected ? `${GREEN_DIM}` : "#0f1117",
+                  opacity: m.disabled ? 0.45 : 1,
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="rounded-full p-2.5"
+                      style={{
+                        background: isSelected ? `rgba(0,200,150,0.18)` : "rgba(255,255,255,0.07)",
+                        color: isSelected ? GREEN : "rgba(255,255,255,0.7)",
+                      }}
+                    >
+                      {m.icon}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold flex items-center gap-2">
+                        {m.label}
+                        {m.badge && (
+                          <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                            {m.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-white/40 mt-0.5">
+                        {m.disabled ? m.disabledReason : m.sublabel}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Radio circle */}
+                  <div
+                    className="h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                    style={{ borderColor: isSelected ? GREEN : "rgba(255,255,255,0.2)" }}
+                  >
+                    {isSelected && (
+                      <div className="h-2.5 w-2.5 rounded-full" style={{ background: GREEN }} />
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <button
+          disabled={!selected || loading}
+          onClick={handleConfirm}
+          className="w-full rounded-full py-5 text-lg font-semibold transition disabled:opacity-30"
+          style={{
+            background: selected ? `linear-gradient(135deg,${GREEN},#00a87e)` : "#1a1a1a",
+            color: selected ? "#000" : "#fff",
+          }}
+        >
+          {loading ? "Processing…" : selected === "applepay" ? "Pay with Apple Pay" : selected === "debit" ? "Enter CVV" : "Confirm & Start saving"}
+        </button>
+      </div>
+    </PageShell>
+  );
+}
+
+// ─── Screen: Debit CVV ────────────────────────────────────────────────────────
+function DebitCvvScreen({
+  onBack,
+  onNavigate,
+  product,
+  amount,
+}: {
+  onBack: () => void;
+  onNavigate: (s: string, data?: unknown) => void;
+  product: SavingsProduct;
+  amount: number;
+}) {
+  const [cvv, setCvv] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const valid = cvv.length === 3;
+
+  async function handlePay() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await submitPosition(product, amount, "debit");
+      onNavigate("success", { position: data.position, product, amount });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <PageShell onBack={onBack} title="botim" navCurrent="money">
+      <div className="pt-4">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-full bg-white/8 p-3">
+            <CreditCard className="h-6 w-6 text-white/70" />
+          </div>
+          <div>
+            <div className="text-xl font-semibold">Visa •••• 4782</div>
+            <div className="text-sm text-white/45">Confirm payment of {formatAed(amount)}</div>
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-[28px] bg-[#0f1117] p-6">
+          <div className="mb-2 text-xs text-white/45 uppercase tracking-wider">CVV</div>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={3}
+            value={cvv}
+            onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
+            placeholder="•••"
+            className="w-full bg-transparent text-4xl font-semibold tracking-[0.5em] outline-none placeholder-white/15 text-white"
+          />
+          <div className="mt-3 text-xs text-white/35">3-digit code on the back of your card</div>
+        </div>
+
+        {/* Card visual hint */}
+        <div className="mb-6 flex justify-center">
+          <div className="relative w-52 h-32 rounded-[20px] bg-gradient-to-br from-[#1a1a2e] to-[#16213e] border border-white/10 p-4 flex flex-col justify-between">
+            <div className="text-xs text-white/40 font-mono">VISA •••• 4782</div>
+            <div className="self-end flex flex-col items-end">
+              <div className="text-[10px] text-white/35 mb-0.5">CVV</div>
+              <div
+                className="rounded-md border px-3 py-1 text-xs font-mono"
+                style={{ borderColor: valid ? GREEN : "rgba(255,255,255,0.2)", color: valid ? GREEN : "rgba(255,255,255,0.4)" }}
+              >
+                {cvv.length > 0 ? "•".repeat(cvv.length) : "•••"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <button
+          disabled={!valid || loading}
+          onClick={handlePay}
+          className="w-full rounded-full py-5 text-lg font-semibold transition disabled:opacity-30"
+          style={{
+            background: valid ? `linear-gradient(135deg,${GREEN},#00a87e)` : "#1a1a1a",
+            color: valid ? "#000" : "#fff",
+          }}
+        >
+          {loading ? "Processing…" : "Pay & Start saving"}
+        </button>
+      </div>
+    </PageShell>
+  );
+}
+
+// ─── Screen: Savings Hub (entry from Wealth → Savings) ───────────────────────
+function SavingsHubScreen({
+  onBack,
+  onNavigate,
+  positions,
+  walletBalance,
+  loading,
+}: {
+  onBack: () => void;
+  onNavigate: (s: string, data?: unknown) => void;
+  positions: SavingsPosition[];
+  walletBalance: number;
+  loading: boolean;
+}) {
+  const activePositions = positions.filter((p) => p.status === "active");
+  const totalSaved = activePositions.reduce((s, p) => s + p.balance, 0);
+  const totalPending = activePositions.reduce((s, p) => s + p.pendingYield, 0);
+
+  return (
+    <PageShell
+      onBack={onBack}
+      title="botim"
+      subtitle="SAVINGS"
+      navCurrent="money"
+      onNavigate={(s) => onNavigate(s)}
+      gradient="linear-gradient(180deg,#001a12 0%,#002b1e 22%,#000 65%)"
+    >
+      <div className="pt-4 flex flex-col gap-5">
+        {/* Balance card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[32px] border border-white/10 p-6"
+          style={{ background: "linear-gradient(135deg,rgba(0,60,42,0.95),rgba(0,28,20,0.92))" }}
+        >
+          <div className="text-sm text-white/60 mb-1">Total savings balance</div>
+          <div className="text-4xl font-semibold tracking-tight">
+            {loading ? <span className="animate-pulse text-white/30">···</span> : formatAed(totalSaved)}
+          </div>
+          {totalSaved > 0 && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: GREEN_DIM, color: GREEN }}>
+                +{formatAed(totalPending)} pending today
+              </span>
+              <span className="text-xs text-white/40">credited T+1</span>
+            </div>
+          )}
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-white/8 px-4 py-3">
+            <span className="text-sm text-white/60">Wallet balance</span>
+            <span className="text-base font-semibold">{formatAed(walletBalance)}</span>
+          </div>
+        </motion.div>
+
+        {/* Open new plan CTA */}
+        <button
+          onClick={() => onNavigate("selectProduct")}
+          className="flex w-full items-center justify-between rounded-[24px] px-6 py-5 text-left font-semibold text-lg transition hover:scale-[1.01]"
+          style={{ background: `linear-gradient(135deg,${GREEN},#00a87e)`, color: "#000" }}
+        >
+          <span>Open new savings plan</span>
+          <Plus className="h-6 w-6" />
+        </button>
+
+        {/* Active plans */}
+        {activePositions.length > 0 && (
+          <div>
+            <div className="mb-3 text-base font-semibold text-white/80">My plans</div>
+            <div className="flex flex-col gap-3">
+              {activePositions.map((pos) => (
+                <PositionCard
+                  key={pos.id}
+                  position={pos}
+                  onClick={() => onNavigate("planDetail", pos)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && activePositions.length === 0 && (
+          <div className="rounded-[24px] bg-[#0f1117] p-6 text-center">
+            <div className="mb-2 text-4xl">🌱</div>
+            <div className="text-base font-semibold">Start growing your money</div>
+            <div className="mt-1 text-sm text-white/45">
+              Earn up to 8% p.a. — powered by stablecoin yield, paid daily in AED.
+            </div>
+          </div>
+        )}
+
+        {/* How it works */}
+        <div className="rounded-[28px] bg-[#0f1117] p-5">
+          <div className="mb-3 text-base font-semibold">How it works</div>
+          <div className="flex flex-col gap-3">
+            {[
+              { icon: <TrendingUp className="h-4 w-4" />, text: "Deposit AED — earn yield in AED" },
+              { icon: <Sparkles className="h-4 w-4" />, text: "Yield accrues daily, credited T+1" },
+              { icon: <ShieldCheck className="h-4 w-4" />, text: "Powered by stablecoin staking — you hold AED" },
+              { icon: <BadgeCheck className="h-4 w-4" />, text: "Yield auto-reinvested for compounding" },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-3 text-sm text-white/75">
+                <div className="rounded-full p-1.5 shrink-0" style={{ background: GREEN_DIM, color: GREEN }}>{icon}</div>
+                {text}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 type Screen =
   | "hub"
+  | "savingsHub"
   | "selectProduct"
   | "deposit"
   | "confirm"
+  | "paymentMethod"
+  | "debitCvv"
   | "success"
   | "planDetail"
   | "redeem"
@@ -1089,7 +1744,7 @@ export default function SavingsPrototype() {
   function navigate(screen: string, data?: unknown) {
     if (screen === "hub") {
       loadData();
-      setHistory([{ screen: "hub" }]);
+      setHistory([{ screen: "hub", data }]);
     } else {
       setHistory((h) => [...h, { screen: screen as Screen, data }]);
     }
@@ -1109,11 +1764,22 @@ export default function SavingsPrototype() {
             positions={positions}
             walletBalance={walletBalance}
             loading={loading}
+            initialTab={(data as { tab?: "pay" | "credit" | "wealth" })?.tab ?? "pay"}
+          />
+        );
+      case "savingsHub":
+        return (
+          <SavingsHubScreen
+            onBack={() => navigate("hub", { tab: "wealth" })}
+            onNavigate={navigate}
+            positions={positions}
+            walletBalance={walletBalance}
+            loading={loading}
           />
         );
       case "selectProduct":
         return (
-          <ProductSelector onBack={back} onNavigate={navigate} products={products} />
+          <ProductSelector onBack={back} onNavigate={navigate} products={products} positions={positions} />
         );
       case "deposit":
         return (
@@ -1129,9 +1795,35 @@ export default function SavingsPrototype() {
         return (
           <ConfirmDeposit
             onBack={back}
+            onNavigate={navigate}
+            product={product}
+            amount={amount}
+          />
+        );
+      }
+      case "paymentMethod": {
+        const { product, amount } = data as { product: SavingsProduct; amount: number };
+        return (
+          <PaymentMethodScreen
+            onBack={back}
             onNavigate={(s, d) => {
               navigate(s, d);
-              loadData(); // refresh wallet balance
+              if (s === "success") loadData();
+            }}
+            product={product}
+            amount={amount}
+            walletBalance={walletBalance}
+          />
+        );
+      }
+      case "debitCvv": {
+        const { product, amount } = data as { product: SavingsProduct; amount: number };
+        return (
+          <DebitCvvScreen
+            onBack={back}
+            onNavigate={(s, d) => {
+              navigate(s, d);
+              if (s === "success") loadData();
             }}
             product={product}
             amount={amount}

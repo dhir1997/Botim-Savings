@@ -137,16 +137,35 @@ export function getPosition(id: string): SavingsPosition | undefined {
 
 export function createPosition(
   productId: ProductId,
-  amount: number
+  amount: number,
+  paymentMethod: "wallet" | "debit" | "applepay" = "wallet"
 ): SavingsPosition {
   const state = getState();
   const product = PRODUCTS.find((p) => p.id === productId)!;
 
-  if (amount > state.walletBalance) throw new Error("Insufficient wallet balance");
   if (amount < product.minDeposit)
     throw new Error(`Minimum deposit is AED ${product.minDeposit}`);
 
-  state.walletBalance = parseFloat((state.walletBalance - amount).toFixed(4));
+  if (paymentMethod === "wallet") {
+    if (amount > state.walletBalance) throw new Error("Insufficient wallet balance");
+    state.walletBalance = parseFloat((state.walletBalance - amount).toFixed(4));
+  }
+  // debit / applepay: funds come externally, wallet unchanged
+
+  // Flexible: merge into existing active plan if one exists
+  if (productId === "flexible") {
+    const existing = state.positions.find(
+      (p) => p.productId === "flexible" && p.status === "active"
+    );
+    if (existing) {
+      existing.principal = parseFloat((existing.principal + amount).toFixed(4));
+      existing.balance = parseFloat((existing.balance + amount).toFixed(4));
+      existing.pendingYield = parseFloat(
+        ((existing.balance * product.rateAnnual) / 365).toFixed(4)
+      );
+      return existing;
+    }
+  }
 
   const now = new Date();
   const maturesAt = product.termDays

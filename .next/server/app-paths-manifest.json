@@ -1,7 +1,5 @@
 {
-  "/api/savings/products/route": "app/api/savings/products/route.js",
   "/api/savings/positions/route": "app/api/savings/positions/route.js",
-  "/api/savings/positions/[id]/route": "app/api/savings/positions/[id]/route.js",
-  "/api/savings/positions/[id]/redeem/route": "app/api/savings/positions/[id]/redeem/route.js",
+  "/api/savings/products/route": "app/api/savings/products/route.js",
   "/page": "app/page.js"
 }
